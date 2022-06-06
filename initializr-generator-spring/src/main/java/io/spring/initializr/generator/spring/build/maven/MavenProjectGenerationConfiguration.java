@@ -31,6 +31,7 @@ import io.spring.initializr.generator.spring.build.BuildCustomizer;
 import io.spring.initializr.generator.spring.util.LambdaSafe;
 
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 
 /**
@@ -49,7 +50,8 @@ public class MavenProjectGenerationConfiguration {
 	}
 
 	@Bean
-	public MavenBuild mavenBuild(ObjectProvider<BuildItemResolver> buildItemResolver,
+	@ConditionalOnMissingBean
+	public MavenBuild ConditionalOnMissingBean(ObjectProvider<BuildItemResolver> buildItemResolver,
 			ObjectProvider<BuildCustomizer<?>> buildCustomizers) {
 		return createBuild(buildItemResolver.getIfAvailable(),
 				buildCustomizers.orderedStream().collect(Collectors.toList()));
@@ -64,6 +66,7 @@ public class MavenProjectGenerationConfiguration {
 	}
 
 	@Bean
+	@ConditionalOnMissingBean
 	public MavenBuildProjectContributor mavenBuildProjectContributor(MavenBuild build,
 			IndentingWriterFactory indentingWriterFactory) {
 		return new MavenBuildProjectContributor(build, indentingWriterFactory);
