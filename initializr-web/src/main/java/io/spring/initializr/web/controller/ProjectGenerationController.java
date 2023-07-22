@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2020 the original author or authors.
+ * Copyright 2012-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,8 +28,6 @@ import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
-import javax.servlet.http.HttpServletResponse;
-
 import io.spring.initializr.generator.buildsystem.BuildSystem;
 import io.spring.initializr.generator.buildsystem.maven.MavenBuildSystem;
 import io.spring.initializr.generator.project.ProjectDescription;
@@ -39,6 +37,7 @@ import io.spring.initializr.web.project.InvalidProjectRequestException;
 import io.spring.initializr.web.project.ProjectGenerationInvoker;
 import io.spring.initializr.web.project.ProjectGenerationResult;
 import io.spring.initializr.web.project.ProjectRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.ArchiveOutputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
@@ -52,21 +51,21 @@ import org.apache.commons.logging.LogFactory;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 /**
- * Base {@link Controller} that provides endpoints for project generation.
+ * Base {@link RestController} that provides endpoints for project generation.
  *
  * @param <R> the {@link ProjectRequest} type to use to bind request parameters
  * @author Stephane Nicoll
  */
-@Controller
+@RestController
 public abstract class ProjectGenerationController<R extends ProjectRequest> {
 
 	private static final Log logger = LogFactory.getLog(ProjectGenerationController.class);
@@ -157,22 +156,23 @@ public abstract class ProjectGenerationController<R extends ProjectRequest> {
 				"." + fileExtension);
 		String wrapperScript = getWrapperScript(result.getProjectDescription());
 		try (ArchiveOutputStream output = archiveOutputStream.apply(Files.newOutputStream(archive))) {
-			Files.walk(result.getRootDirectory()).filter((path) -> !result.getRootDirectory().equals(path))
-					.forEach((path) -> {
-						try {
-							String entryName = getEntryName(result.getRootDirectory(), path);
-							T entry = archiveEntry.apply(path.toFile(), entryName);
-							setMode.accept(entry, getUnixMode(wrapperScript, entryName, path));
-							output.putArchiveEntry(entry);
-							if (!Files.isDirectory(path)) {
-								Files.copy(path, output);
-							}
-							output.closeArchiveEntry();
+			Files.walk(result.getRootDirectory())
+				.filter((path) -> !result.getRootDirectory().equals(path))
+				.forEach((path) -> {
+					try {
+						String entryName = getEntryName(result.getRootDirectory(), path);
+						T entry = archiveEntry.apply(path.toFile(), entryName);
+						setMode.accept(entry, getUnixMode(wrapperScript, entryName, path));
+						output.putArchiveEntry(entry);
+						if (!Files.isDirectory(path)) {
+							Files.copy(path, output);
 						}
-						catch (IOException ex) {
-							throw new IllegalStateException(ex);
-						}
-					});
+						output.closeArchiveEntry();
+					}
+					catch (IOException ex) {
+						throw new IllegalStateException(ex);
+					}
+				});
 		}
 		return archive;
 	}
@@ -221,8 +221,10 @@ public abstract class ProjectGenerationController<R extends ProjectRequest> {
 
 	private ResponseEntity<byte[]> createResponseEntity(byte[] content, String contentType, String fileName) {
 		String contentDispositionValue = "attachment; filename=\"" + fileName + "\"";
-		return ResponseEntity.ok().header("Content-Type", contentType)
-				.header("Content-Disposition", contentDispositionValue).body(content);
+		return ResponseEntity.ok()
+			.header("Content-Type", contentType)
+			.header("Content-Disposition", contentDispositionValue)
+			.body(content);
 	}
 
 }

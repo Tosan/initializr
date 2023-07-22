@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2019 the original author or authors.
+ * Copyright 2012-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,9 @@ import java.util.Map;
  * managed dependencies of a Maven bom. Implementations must be thread-safe.
  *
  * @author Andy Wilkinson
+ * @deprecated as of 0.20.0 in favor of {@link MavenVersionResolver}.
  */
+@Deprecated(since = "0.20.0", forRemoval = true)
 public interface DependencyManagementVersionResolver {
 
 	/**
@@ -47,7 +49,7 @@ public interface DependencyManagementVersionResolver {
 	 * @return the resolver
 	 */
 	static DependencyManagementVersionResolver withCacheLocation(Path location) {
-		return new MavenResolverDependencyManagementVersionResolver(location);
+		return new DefaultMavenVersionResolver(location);
 	}
 
 }

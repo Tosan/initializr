@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2021 the original author or authors.
+ * Copyright 2012-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,27 +45,24 @@ public final class MetadataBuildItemMapper {
 		VersionReference versionReference = (dependency.getVersion() != null)
 				? VersionReference.ofValue(dependency.getVersion()) : null;
 		return io.spring.initializr.generator.buildsystem.Dependency
-				.withCoordinates(dependency.getGroupId(), dependency.getArtifactId()).version(versionReference)
-				.scope(toDependencyScope(dependency.getScope())).classifier(dependency.getClassifier())
-				.type(dependency.getType()).build();
+			.withCoordinates(dependency.getGroupId(), dependency.getArtifactId())
+			.version(versionReference)
+			.scope(toDependencyScope(dependency.getScope()))
+			.classifier(dependency.getClassifier())
+			.type(dependency.getType())
+			.build();
 	}
 
 	private static DependencyScope toDependencyScope(String scope) {
-		switch (scope) {
-		case Dependency.SCOPE_ANNOTATION_PROCESSOR:
-			return DependencyScope.ANNOTATION_PROCESSOR;
-		case Dependency.SCOPE_COMPILE:
-			return DependencyScope.COMPILE;
-		case Dependency.SCOPE_RUNTIME:
-			return DependencyScope.RUNTIME;
-		case Dependency.SCOPE_COMPILE_ONLY:
-			return DependencyScope.COMPILE_ONLY;
-		case Dependency.SCOPE_PROVIDED:
-			return DependencyScope.PROVIDED_RUNTIME;
-		case Dependency.SCOPE_TEST:
-			return DependencyScope.TEST_COMPILE;
-		}
-		return null;
+		return switch (scope) {
+			case Dependency.SCOPE_ANNOTATION_PROCESSOR -> DependencyScope.ANNOTATION_PROCESSOR;
+			case Dependency.SCOPE_COMPILE -> DependencyScope.COMPILE;
+			case Dependency.SCOPE_RUNTIME -> DependencyScope.RUNTIME;
+			case Dependency.SCOPE_COMPILE_ONLY -> DependencyScope.COMPILE_ONLY;
+			case Dependency.SCOPE_PROVIDED -> DependencyScope.PROVIDED_RUNTIME;
+			case Dependency.SCOPE_TEST -> DependencyScope.TEST_COMPILE;
+			default -> null;
+		};
 	}
 
 	/**
@@ -80,7 +77,10 @@ public final class MetadataBuildItemMapper {
 		VersionReference version = (bom.getVersionProperty() != null)
 				? VersionReference.ofProperty(bom.getVersionProperty()) : VersionReference.ofValue(bom.getVersion());
 		return io.spring.initializr.generator.buildsystem.BillOfMaterials
-				.withCoordinates(bom.getGroupId(), bom.getArtifactId()).version(version).order(bom.getOrder()).build();
+			.withCoordinates(bom.getGroupId(), bom.getArtifactId())
+			.version(version)
+			.order(bom.getOrder())
+			.build();
 	}
 
 	/**
@@ -95,9 +95,11 @@ public final class MetadataBuildItemMapper {
 			return null;
 		}
 		return io.spring.initializr.generator.buildsystem.MavenRepository
-				.withIdAndUrl(id, repository.getUrl().toExternalForm()).name(repository.getName())
-				.releasesEnabled(repository.isReleasesEnabled()).snapshotsEnabled(repository.isSnapshotsEnabled())
-				.build();
+			.withIdAndUrl(id, repository.getUrl().toExternalForm())
+			.name(repository.getName())
+			.releasesEnabled(repository.isReleasesEnabled())
+			.snapshotsEnabled(repository.isSnapshotsEnabled())
+			.build();
 	}
 
 }

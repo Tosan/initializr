@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2022 the original author or authors.
+ * Copyright 2012-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import io.spring.initializr.generator.buildsystem.Dependency;
 import io.spring.initializr.generator.buildsystem.DependencyScope;
 import io.spring.initializr.generator.buildsystem.gradle.GradleBuildSystem;
 import io.spring.initializr.generator.buildsystem.gradle.GroovyDslGradleBuildWriter;
+import io.spring.initializr.generator.language.groovy.GroovyLanguage;
 import io.spring.initializr.generator.language.java.JavaLanguage;
 import io.spring.initializr.generator.packaging.war.WarPackaging;
 import io.spring.initializr.generator.project.MutableProjectDescription;
@@ -57,15 +58,15 @@ class GradleProjectGenerationConfigurationTests {
 	@BeforeEach
 	void setup(@TempDir Path directory) {
 		this.projectTester = new ProjectAssetTester().withIndentingWriterFactory()
-				.withConfiguration(BuildProjectGenerationConfiguration.class,
-						GradleProjectGenerationConfiguration.class)
-				.withDirectory(directory)
-				.withBean(InitializrMetadata.class, () -> InitializrMetadataTestBuilder.withDefaults().build())
-				.withDescriptionCustomizer((description) -> description.setBuildSystem(new GradleBuildSystem()));
+			.withConfiguration(BuildProjectGenerationConfiguration.class, GradleProjectGenerationConfiguration.class)
+			.withDirectory(directory)
+			.withBean(InitializrMetadata.class, () -> InitializrMetadataTestBuilder.withDefaults().build())
+			.withDescriptionCustomizer((description) -> description.setBuildSystem(new GradleBuildSystem()));
 	}
 
 	static Stream<Arguments> supportedPlatformVersions() {
-		return Stream.of(Arguments.arguments("2.2.3.RELEASE"), Arguments.arguments("2.5.0"));
+		return Stream.of(Arguments.arguments("2.2.3.RELEASE"), Arguments.arguments("2.5.0"),
+				Arguments.arguments("2.7.10"));
 	}
 
 	@ParameterizedTest(name = "Spring Boot {0}")
@@ -75,15 +76,17 @@ class GradleProjectGenerationConfigurationTests {
 		description.setPlatformVersion(Version.parse(platformVersion));
 		description.setLanguage(new JavaLanguage());
 		this.projectTester.configure(description, (context) -> {
-			assertThat(context).hasSingleBean(BuildWriter.class).getBean(BuildWriter.class)
-					.isInstanceOf(GradleBuildProjectContributor.class);
+			assertThat(context).hasSingleBean(BuildWriter.class)
+				.getBean(BuildWriter.class)
+				.isInstanceOf(GradleBuildProjectContributor.class);
 			assertThat(ReflectionTestUtils.getField(context.getBean(BuildWriter.class), "buildWriter"))
-					.isInstanceOf(GroovyDslGradleBuildWriter.class);
+				.isInstanceOf(GroovyDslGradleBuildWriter.class);
 		});
 	}
 
 	static Stream<Arguments> gradleWrapperParameters() {
-		return Stream.of(Arguments.arguments("2.2.3.RELEASE", "6.9.2"), Arguments.arguments("2.5.0", "7.4.1"));
+		return Stream.of(Arguments.arguments("2.2.3.RELEASE", "6.9.3"), Arguments.arguments("2.5.0", "7.6.2"),
+				Arguments.arguments("2.7.10", "8.1.1"));
 	}
 
 	@ParameterizedTest(name = "Spring Boot {0}")
@@ -96,7 +99,7 @@ class GradleProjectGenerationConfigurationTests {
 		assertThat(project).containsFiles("gradlew", "gradlew.bat", "gradle/wrapper/gradle-wrapper.properties",
 				"gradle/wrapper/gradle-wrapper.jar");
 		assertThat(project).textFile("gradle/wrapper/gradle-wrapper.properties")
-				.containsOnlyOnce(String.format("gradle-%s-bin.zip", expectedGradleVersion));
+			.containsOnlyOnce(String.format("gradle-%s-bin.zip", expectedGradleVersion));
 	}
 
 	@Test
@@ -110,14 +113,17 @@ class GradleProjectGenerationConfigurationTests {
 		assertThat(project).textFile("build.gradle").containsExactly(
 		// @formatter:off
 				"plugins {",
+				"    id 'java'",
 				"    id 'org.springframework.boot' version '2.4.0'",
 				"    id 'io.spring.dependency-management' version '1.0.6.RELEASE'",
-				"    id 'java'",
 				"}",
 				"",
 				"group = 'com.example'",
 				"version = '0.0.1-SNAPSHOT'",
-				"sourceCompatibility = '11'",
+				"",
+				"java {",
+				"    sourceCompatibility = '11'",
+				"}",
 				"",
 				"repositories {",
 				"    mavenCentral()",
@@ -132,6 +138,15 @@ class GradleProjectGenerationConfigurationTests {
 				"tasks.named('test') {",
 				"    useJUnitPlatform()",
 				"}"); // @formatter:on
+	}
+
+	@Test
+	void groovyPluginIsAppliedWhenBuildingProjectThatUsesGroovyLanguage() {
+		MutableProjectDescription description = new MutableProjectDescription();
+		description.setPlatformVersion(Version.parse("2.4.0.RELEASE"));
+		description.setLanguage(new GroovyLanguage());
+		ProjectStructure project = this.projectTester.generate(description);
+		assertThat(project).textFile("build.gradle").lines().containsOnlyOnce("    id 'groovy'");
 	}
 
 	@Test
@@ -150,8 +165,9 @@ class GradleProjectGenerationConfigurationTests {
 		description.setPlatformVersion(Version.parse("2.2.4.RELEASE"));
 		description.setLanguage(new JavaLanguage());
 		ProjectStructure project = this.projectTester.generate(description);
-		assertThat(project).textFile("build.gradle").lines().containsSequence("tasks.named('test') {",
-				"    useJUnitPlatform()", "}");
+		assertThat(project).textFile("build.gradle")
+			.lines()
+			.containsSequence("tasks.named('test') {", "    useJUnitPlatform()", "}");
 	}
 
 	@Test
@@ -160,9 +176,10 @@ class GradleProjectGenerationConfigurationTests {
 		description.setPlatformVersion(Version.parse("2.2.4.RELEASE"));
 		description.setLanguage(new JavaLanguage());
 		ProjectStructure project = this.projectTester.generate(description);
-		assertThat(project).textFile("build.gradle").lines().containsSequence(
-				"    testImplementation('org.springframework.boot:spring-boot-starter-test') {",
-				"        exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'", "    }");
+		assertThat(project).textFile("build.gradle")
+			.lines()
+			.containsSequence("    testImplementation('org.springframework.boot:spring-boot-starter-test') {",
+					"        exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'", "    }");
 	}
 
 	@Test

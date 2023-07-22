@@ -38,8 +38,7 @@
 	</developers>
 
 	<properties>
-		<revision>0.13.0-SNAPSHOT</revision>
-		<disable.checks>false</disable.checks>
+		<revision>0.20.1-SNAPSHOT</revision>
 		<git.url>https://github.com/spring-io/initializr</git.url>
 		<git.connection>scm:git:https://github.com/spring-io/initializr</git.connection>
 		<git.developerConnection>scm:git:ssh://git@github.com/spring-io/initializr.git</git.developerConnection>
@@ -66,7 +65,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-deploy-plugin</artifactId>
-				<version>2.8.2</version>
+				<version>3.1.1</version>
 				<inherited>false</inherited>
 				<configuration>
 					<skip>true</skip>
@@ -84,7 +83,7 @@
 				</property>
 			</activation>
 			<properties>
-				<spring-javaformat.version>0.0.33</spring-javaformat.version>
+				<spring-javaformat.version>0.0.39</spring-javaformat.version>
 				<nohttp-checkstyle.version>0.0.10</nohttp-checkstyle.version>
 			</properties>
 			<build>
@@ -96,9 +95,6 @@
 						<executions>
 							<execution>
 								<phase>validate</phase>
-								<configuration>
-									<skip>${disable.checks}</skip>
-								</configuration>
 								<goals>
 									<goal>validate</goal>
 								</goals>
@@ -108,7 +104,7 @@
 					<plugin>
 						<groupId>org.apache.maven.plugins</groupId>
 						<artifactId>maven-checkstyle-plugin</artifactId>
-						<version>3.1.2</version>
+						<version>3.3.0</version>
 						<dependencies>
 							<dependency>
 								<groupId>com.puppycrawl.tools</groupId>
@@ -131,7 +127,6 @@
 								<id>checkstyle-validation</id>
 								<phase>validate</phase>
 								<configuration>
-									<skip>${disable.checks}</skip>
 									<configLocation>src/checkstyle/checkstyle.xml</configLocation>
 									<suppressionsLocation>src/checkstyle/checkstyle-suppressions.xml</suppressionsLocation>
 									<includeTestSourceDirectory>true</includeTestSourceDirectory>
@@ -145,11 +140,9 @@
 								<id>nohttp-checkstyle-validation</id>
 								<phase>validate</phase>
 								<configuration>
-									<skip>${disable.checks}</skip>
 									<configLocation>src/checkstyle/nohttp-checkstyle.xml</configLocation>
 									<suppressionsLocation>src/checkstyle/nohttp-checkstyle-suppressions.xml</suppressionsLocation>
 									<propertyExpansion>main.basedir=${main.basedir}</propertyExpansion>
-									<encoding>UTF-8</encoding>
 									<sourceDirectories>${basedir}</sourceDirectories>
 									<includes>**/*</includes>
 									<excludes>**/.git/**/*,**/.idea/**/*,**/target/**/,**/.flattened-pom.xml,**/*.class</excludes>
@@ -217,17 +210,6 @@
 					</plugins>
 				</pluginManagement>
 			</build>
-		</profile>
-		<profile>
-			<id>fast</id>
-			<activation>
-				<property>
-					<name>fast</name>
-				</property>
-			</activation>
-			<properties>
-				<disable.checks>true</disable.checks>
-			</properties>
 		</profile>
 	</profiles>
 

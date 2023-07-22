@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2021 the original author or authors.
+ * Copyright 2012-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,30 +34,88 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class ConditionalOnGradleVersionTests {
 
 	private final ProjectAssetTester projectTester = new ProjectAssetTester()
-			.withConfiguration(GradleVersionTestConfiguration.class);
+		.withConfiguration(GradleVersionTestConfiguration.class);
 
 	@Test
+	@Deprecated
 	void outcomeWithSpringBoot23() {
 		MutableProjectDescription description = new MutableProjectDescription();
 		description.setPlatformVersion(Version.parse("2.3.10.RELEASE"));
-		this.projectTester.configure(description, (context) -> assertThat(context).hasSingleBean(String.class)
-				.getBean(String.class).isEqualTo("testGradle6"));
+		this.projectTester.configure(description,
+				(context) -> assertThat(context).hasSingleBean(String.class)
+					.getBean(String.class)
+					.isEqualTo("testGradle6"));
 	}
 
 	@Test
+	@Deprecated
 	void outcomeWithSpringBoot24() {
 		MutableProjectDescription description = new MutableProjectDescription();
 		description.setPlatformVersion(Version.parse("2.4.0"));
-		this.projectTester.configure(description, (context) -> assertThat(context).hasSingleBean(String.class)
-				.getBean(String.class).isEqualTo("testGradle6"));
+		this.projectTester.configure(description,
+				(context) -> assertThat(context).hasSingleBean(String.class)
+					.getBean(String.class)
+					.isEqualTo("testGradle6"));
 	}
 
 	@Test
 	void outcomeWithSpringBoot25() {
 		MutableProjectDescription description = new MutableProjectDescription();
 		description.setPlatformVersion(Version.parse("2.5.1"));
-		this.projectTester.configure(description, (context) -> assertThat(context).hasSingleBean(String.class)
-				.getBean(String.class).isEqualTo("testGradle7"));
+		this.projectTester.configure(description,
+				(context) -> assertThat(context).hasSingleBean(String.class)
+					.getBean(String.class)
+					.isEqualTo("testGradle7"));
+	}
+
+	@Test
+	void outcomeWithSpringBoot26() {
+		MutableProjectDescription description = new MutableProjectDescription();
+		description.setPlatformVersion(Version.parse("2.6.1"));
+		this.projectTester.configure(description,
+				(context) -> assertThat(context).hasSingleBean(String.class)
+					.getBean(String.class)
+					.isEqualTo("testGradle7"));
+	}
+
+	@Test
+	void outcomeWithSpringBootEarly27() {
+		MutableProjectDescription description = new MutableProjectDescription();
+		description.setPlatformVersion(Version.parse("2.7.9"));
+		this.projectTester.configure(description,
+				(context) -> assertThat(context).hasSingleBean(String.class)
+					.getBean(String.class)
+					.isEqualTo("testGradle7"));
+	}
+
+	@Test
+	void outcomeWithSpringBootLate27() {
+		MutableProjectDescription description = new MutableProjectDescription();
+		description.setPlatformVersion(Version.parse("2.7.10"));
+		this.projectTester.configure(description,
+				(context) -> assertThat(context).hasSingleBean(String.class)
+					.getBean(String.class)
+					.isEqualTo("testGradle8"));
+	}
+
+	@Test
+	void outcomeWithSpringBoot30() {
+		MutableProjectDescription description = new MutableProjectDescription();
+		description.setPlatformVersion(Version.parse("3.0.0"));
+		this.projectTester.configure(description,
+				(context) -> assertThat(context).hasSingleBean(String.class)
+					.getBean(String.class)
+					.isEqualTo("testGradle8"));
+	}
+
+	@Test
+	void outcomeWithSpringBoot31() {
+		MutableProjectDescription description = new MutableProjectDescription();
+		description.setPlatformVersion(Version.parse("3.1.0"));
+		this.projectTester.configure(description,
+				(context) -> assertThat(context).hasSingleBean(String.class)
+					.getBean(String.class)
+					.isEqualTo("testGradle8"));
 	}
 
 	@Test
@@ -76,9 +134,10 @@ public class ConditionalOnGradleVersionTests {
 	@Test
 	void outcomeWithSpringBoot24AndMultipleGenerations() {
 		MutableProjectDescription description = new MutableProjectDescription();
-		description.setPlatformVersion(Version.parse("2.4.0"));
-		this.projectTester.withConfiguration(Gradle6Or7TestConfiguration.class).configure(description,
-				(context) -> assertThat(context).getBeanNames(String.class).containsOnly("gradle6", "gradle6Or7"));
+		description.setPlatformVersion(Version.parse("2.7.0"));
+		this.projectTester.withConfiguration(Gradle7Or8TestConfiguration.class)
+			.configure(description,
+					(context) -> assertThat(context).getBeanNames(String.class).containsOnly("gradle7", "gradle7Or8"));
 	}
 
 	@Configuration
@@ -86,6 +145,7 @@ public class ConditionalOnGradleVersionTests {
 
 		@Bean
 		@ConditionalOnGradleVersion("6")
+		@Deprecated
 		String gradle6() {
 			return "testGradle6";
 		}
@@ -96,15 +156,21 @@ public class ConditionalOnGradleVersionTests {
 			return "testGradle7";
 		}
 
+		@Bean
+		@ConditionalOnGradleVersion("8")
+		String gradle8() {
+			return "testGradle8";
+		}
+
 	}
 
 	@Configuration
-	static class Gradle6Or7TestConfiguration {
+	static class Gradle7Or8TestConfiguration {
 
 		@Bean
-		@ConditionalOnGradleVersion({ "6", "7" })
-		String gradle6Or7() {
-			return "testGradle6Or7";
+		@ConditionalOnGradleVersion({ "7", "8" })
+		String gradle7Or8() {
+			return "testGradle7Or8";
 		}
 
 	}

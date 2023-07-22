@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2020 the original author or authors.
+ * Copyright 2012-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +19,6 @@ package io.spring.initializr.web.controller;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
-import javax.servlet.http.HttpServletResponse;
-
 import io.spring.initializr.generator.version.Version;
 import io.spring.initializr.metadata.DependencyMetadata;
 import io.spring.initializr.metadata.DependencyMetadataProvider;
@@ -35,23 +33,23 @@ import io.spring.initializr.web.mapper.InitializrMetadataV22JsonMapper;
 import io.spring.initializr.web.mapper.InitializrMetadataV2JsonMapper;
 import io.spring.initializr.web.mapper.InitializrMetadataVersion;
 import io.spring.initializr.web.project.InvalidProjectRequestException;
+import jakarta.servlet.http.HttpServletResponse;
 
 import org.springframework.http.CacheControl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.RestController;
 
 /**
- * {@link Controller} that exposes metadata and service configuration.
+ * {@link RestController} that exposes metadata and service configuration.
  *
  * @author Stephane Nicoll
  */
-@Controller
+@RestController
 public class ProjectMetadataController extends AbstractMetadataController {
 
 	/**
@@ -68,7 +66,6 @@ public class ProjectMetadataController extends AbstractMetadataController {
 	}
 
 	@RequestMapping(path = "/metadata/config", produces = "application/json")
-	@ResponseBody
 	public InitializrMetadata config() {
 		return this.metadataProvider.get();
 	}
@@ -138,8 +135,11 @@ public class ProjectMetadataController extends AbstractMetadataController {
 		}
 		DependencyMetadata dependencyMetadata = this.dependencyMetadataProvider.get(metadata, v);
 		String content = new DependencyMetadataV21JsonMapper().write(dependencyMetadata);
-		return ResponseEntity.ok().contentType(version.getMediaType()).eTag(createUniqueId(content))
-				.cacheControl(determineCacheControlFor(metadata)).body(content);
+		return ResponseEntity.ok()
+			.contentType(version.getMediaType())
+			.eTag(createUniqueId(content))
+			.cacheControl(determineCacheControlFor(metadata))
+			.body(content);
 	}
 
 	private ResponseEntity<String> serviceCapabilitiesFor(InitializrMetadataVersion version) {
@@ -150,18 +150,22 @@ public class ProjectMetadataController extends AbstractMetadataController {
 		String appUrl = generateAppUrl();
 		InitializrMetadata metadata = this.metadataProvider.get();
 		String content = getJsonMapper(version).write(metadata, appUrl);
-		return ResponseEntity.ok().contentType(contentType).eTag(createUniqueId(content)).varyBy("Accept")
-				.cacheControl(determineCacheControlFor(metadata)).body(content);
+		return ResponseEntity.ok()
+			.contentType(contentType)
+			.eTag(createUniqueId(content))
+			.varyBy("Accept")
+			.cacheControl(determineCacheControlFor(metadata))
+			.body(content);
 	}
 
 	private static InitializrMetadataJsonMapper getJsonMapper(InitializrMetadataVersion version) {
 		switch (version) {
-		case V2:
-			return new InitializrMetadataV2JsonMapper();
-		case V2_1:
-			return new InitializrMetadataV21JsonMapper();
-		default:
-			return new InitializrMetadataV22JsonMapper();
+			case V2:
+				return new InitializrMetadataV2JsonMapper();
+			case V2_1:
+				return new InitializrMetadataV21JsonMapper();
+			default:
+				return new InitializrMetadataV22JsonMapper();
 		}
 	}
 
